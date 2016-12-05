@@ -1,0 +1,95 @@
+# This file is part of libertine linux's package gnumake. It is subject to the license terms in the COPYRIGHT file found in the top-level directory of this distribution and at https://raw.githubusercontent.com/libertine-linux-packages/gnumake/master/COPYRIGHT. No part of libertine linux's package gnumake, including this file, may be copied, modified, propagated, or distributed except according to the terms contained in the COPYRIGHT file.
+# Copyright © 2016 The developers of libertine linux's package gnumake. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/libertine-linux-packages/gnumake/master/COPYRIGHT.
+
+
+variant=upstream
+
+_libertine_gnumake_packageVersion='4.2.1'
+
+case "$package" in
+	
+	build_gnumake)
+		
+		build_provides make
+		
+		build_needs cc
+		libertine_compile_build_gnumake()
+		{
+			_libertine_compile_gnumake_internal "$(libertine_public_outputBuildSysrootPath)" "$(libertine_public_outputBuildSysrootPath)" "$libertine_build" '' cc
+		}
+		
+	;;
+	
+	gnumake)
+		
+		depends build_ccache
+		build_needs ccache
+	
+		depends build_musl_cross_make_host
+		build_needs "$libertine_host"-cc "$libertine_host"-strip
+		libertine_compile_gnumake()
+		{
+			_libertine_compile_gnumake_internal "$(libertine_public_outputInitramfsPath)" '' "$libertine_host" "$libertine_host"-strip "$libertine_host"-cc $(libertine_public_hostCCompilerFlags)
+		}
+		
+	;;
+	
+esac
+
+build_needs mkdir mv cat
+_libertine_compile_gnumake_internal()
+{
+	local outputFolderPath="$1"
+	local installedRootFolderPath="$2"
+	local host="$3"
+	local stripProgram="$4"
+	local compiler="$5"
+	shift 5
+	
+	libertine_public_autoconf_installConfigHHeader
+	
+	# Override
+	libertine_public_autoconf_configHHeaderRedefine PACKAGE_STRING "GNU make $_libertine_gnumake_packageVersion" true
+	libertine_public_autoconf_configHHeaderRedefine PACKAGE_VERSION "$_libertine_gnumake_packageVersion" true
+	libertine_public_autoconf_configHHeaderRedefine SCCS_GET 'sccs-get-not-supported-on-libertine' true
+	libertine_public_autoconf_configHHeaderRedefine _FILE_OFFSET_BITS 64 false
+	
+	# Mac OS X
+	libertine_public_autoconf_configHHeaderRedefine MAKE_HOST "$host" true
+	libertine_public_autoconf_configHHeaderUndefine HAVE_CASE_INSENSITIVE_FS
+	libertine_public_autoconf_configHHeaderUndefine HAVE_CFLOCALECOPYCURRENT
+	libertine_public_autoconf_configHHeaderUndefine HAVE_CFPREFERENCESCOPYAPPVALUE
+	
+	# Windows
+	libertine_public_autoconf_configHHeaderUndefine WINDOWS32
+	libertine_public_autoconf_configHHeaderUndefine HAVE_DOS_PATHS
+	libertine_public_autoconf_configHHeaderRedefine PATH_SEPARATOR_CHAR "':'" false
+	
+	# Not specified using ./configure
+	libertine_public_autoconf_configHHeaderRedefine LOCALEDIR "$installedRootFolderPath"/usr/share/locale true
+	libertine_public_autoconf_configHHeaderRedefine INCLUDEDIR "$installedRootFolderPath"/usr/include true
+	libertine_public_autoconf_configHHeaderRedefine LIBDIR "$installedRootFolderPath"/usr/lib true
+		
+	pushd "$(libertine_public_sourcePath)"
+		
+		# -x c --std=gnu89 -v
+		set -- "$@" -I. -Iglob -DHAVE_CONFIG_H -o make
+		
+		local fileBaseName
+		for fileBaseName in ar arscan commands default dir expand file function getopt getopt1 guile implicit job load loadapi main misc posixos output read remake rule signame strcache variable version vpath hash remote-stub glob/fnmatch glob/glob
+		do
+			set -- "$@" "$fileBaseName".c
+		done
+		"$compiler" "$@"
+		
+		if [ -n "$stripProgram" ]; then
+			${libertine_host}-strip make
+		fi
+		
+		local outputBinFolderPath="$outputFolderPath"/usr/bin
+		mkdir -m 0755 -p "$outputBinFolderPath"
+			
+		mv make "$outputBinFolderPath"
+		
+	popd
+}
