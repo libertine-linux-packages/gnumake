@@ -15,7 +15,7 @@ case "$package" in
 		build_needs cc
 		libertine_compile_build_gnumake()
 		{
-			_libertine_compile_gnumake_internal "$(libertine_public_outputBuildSysrootPath)" "$(libertine_public_outputBuildSysrootPath)" "$libertine_build" '' cc
+			_libertine_compile_gnumake_internal "$(libertine_public_outputBuildSysrootPath)" "$(libertine_public_outputBuildSysrootPath)" "$libertine_build" cc false
 		}
 		
 	;;
@@ -29,7 +29,7 @@ case "$package" in
 		build_needs "$libertine_host"-cc "$libertine_host"-strip
 		libertine_compile_gnumake()
 		{
-			_libertine_compile_gnumake_internal "$(libertine_public_outputInitramfsPath)" '' "$libertine_host" "$libertine_host"-strip "$libertine_host"-cc $(libertine_public_hostCCompilerFlags)
+			_libertine_compile_gnumake_internal "$(libertine_public_outputInitramfsPath)" '' "$libertine_host" "$libertine_host"-cc true $(libertine_public_hostCCompilerFlags)
 		}
 		
 	;;
@@ -42,9 +42,9 @@ _libertine_compile_gnumake_internal()
 	local outputFolderPath="$1"
 	local installedRootFolderPath="$2"
 	local host="$3"
-	local stripProgram="$4"
-	local compiler="$5"
-	shift 5
+	local compiler="$4"
+	local strip="$5"
+	shift 4
 	
 	libertine_public_autoconf_installConfigHHeader
 	
@@ -82,8 +82,8 @@ _libertine_compile_gnumake_internal()
 		done
 		"$compiler" "$@"
 		
-		if [ -n "$stripProgram" ]; then
-			${libertine_host}-strip make
+		if $strip; then
+			libertine_public_stripAndSecureBinary make
 		fi
 		
 		local outputBinFolderPath="$outputFolderPath"/usr/bin
