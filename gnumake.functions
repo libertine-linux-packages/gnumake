@@ -44,7 +44,7 @@ _libertine_compile_gnumake_internal()
 	local host="$3"
 	local compiler="$4"
 	local strip="$5"
-	shift 4
+	shift 5
 	
 	libertine_public_autoconf_installConfigHHeader
 	
