@@ -27,6 +27,10 @@ case "$package" in
 	
 		depends build_musl_cross_make_host
 		build_needs "$libertine_host"-cc "$libertine_host"-strip
+
+		depends build_paxctl
+		build_needs paxctl
+		
 		libertine_compile_gnumake()
 		{
 			_libertine_compile_gnumake_internal "$(libertine_public_outputInitramfsPath)" '' "$libertine_host" "$libertine_host"-cc true $(libertine_public_hostCCompilerFlags)
