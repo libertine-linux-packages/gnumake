@@ -1,8 +1,4 @@
-Updating origin
-https://github.com/libertine-linux-mirrors/make
-Branch 'master' set up to track remote branch 'master' from 'origin'.
 [submodule "upstream"]
 	path = upstream
 	url = https://github.com/libertine-linux-mirrors/make.git
 	branch = master
-	libertine-linux-upstream = git://git.savannah.gnu.org/make.git
